@@ -1,0 +1,783 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#18224a">
+<title>QuizEn</title>
+<style>
+:root{--navy:#18224a;--blue:#4057d6;--pale:#eef1ff;--ink:#202644;--muted:#68708b;--green:#13865b;--red:#c33d51}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:linear-gradient(145deg,#edf0ff,#fff 60%,#e9fbf4);color:var(--ink);min-height:100vh}
+.wrap{width:min(760px,100%);margin:auto;padding:20px 16px 34px}
+header{display:flex;align-items:center;gap:12px;margin:8px 0 20px}
+.logo{width:48px;height:48px;border-radius:15px;background:var(--navy);color:#fff;display:grid;place-items:center;font-size:24px;box-shadow:0 8px 20px #18224a22}
+h1{font-size:clamp(22px,5vw,30px);margin:0;letter-spacing:-.5px}
+.subtitle{margin:3px 0 0;color:var(--muted);font-size:14px}
+.panel{background:linear-gradient(145deg,rgba(255,255,255,.94),rgba(250,251,255,.88));border:1px solid rgba(255,255,255,.95);border-top-color:#fff;border-radius:26px;padding:clamp(18px,4vw,28px);box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 14px 38px rgba(41,51,92,.08),0 2px 5px rgba(255,255,255,.7)}
+.stats{display:flex;gap:10px;margin-bottom:18px}
+.stat{flex:1;background:linear-gradient(145deg,rgba(255,255,255,.88),rgba(239,243,255,.82));border:1px solid rgba(255,255,255,.95);border-radius:16px;padding:12px 14px;min-width:0;box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 5px 14px rgba(51,66,130,.05)}
+.stat small{display:block;color:var(--muted);font-size:12px;margin-bottom:3px}
+.stat strong{font-size:17px}
+.hearts{color:#d43c57;letter-spacing:0;font-size:19px;white-space:nowrap}.life-stat{position:relative}.life-toast{position:absolute;top:5px;right:8px;z-index:5;background:#13865b;color:#fff;padding:5px 10px;border-radius:999px;font-size:13px;font-weight:850;box-shadow:0 5px 14px #18224a22;opacity:0;pointer-events:none;transition:opacity .2s;transform:translateY(-4px)}.life-toast.show{opacity:1;transform:translateY(0)}.life-toast.minus{background:#c33d51}
+.progressrow{display:flex;justify-content:space-between;gap:10px;font-size:13px;color:var(--muted);margin-bottom:8px}
+.track{height:8px;background:#edf0f8;border-radius:99px;overflow:hidden;margin-bottom:22px}
+.bar{height:100%;background:linear-gradient(90deg,#4057d6,#7b6cf0);width:0%;transition:width .2s}
+.tag{display:inline-block;background:var(--pale);color:var(--blue);padding:6px 10px;border-radius:99px;font-weight:700;font-size:12px;margin-bottom:12px}
+.question{font-size:clamp(19px,4vw,24px);line-height:1.4;font-weight:750;margin:0 0 20px}
+.options{display:grid;gap:10px}
+.option{border:2px solid #e4e8f4;border-radius:15px;background:#fff;padding:14px 15px;text-align:left;font:inherit;color:var(--ink);cursor:pointer;display:flex;gap:12px;align-items:flex-start;transition:.15s}
+.option .letter{width:28px;height:28px;flex:0 0 28px;border-radius:9px;background:#f0f2fb;color:#46517d;display:grid;place-items:center;font-weight:800;font-size:13px}
+.option:hover:not(:disabled){border-color:#8795ee;background:#fafaff}
+.option:disabled{cursor:default;opacity:1}
+.option.correct{border-color:#2da779;background:#effbf5}
+.option.correct .letter{background:#d4f4e5;color:#08754a}
+.option.wrong{border-color:#db6877;background:#fff4f5}
+.option.wrong .letter{background:#ffe0e4;color:#a52c40}
+.feedback{display:none;margin-top:14px;padding:13px 15px;border-radius:14px;font-size:14px;line-height:1.5}
+.feedback.show{display:block}
+.feedback.bad{background:#fff0f2;color:#9c263a}
+.feedback.good{background:#eafaf2;color:#086b47}
+.actions{display:flex;gap:10px;margin-top:18px}
+button.primary{border:0;border-radius:14px;background:var(--blue);color:#fff;font-weight:750;font-size:15px;padding:14px 18px;cursor:pointer;flex:1;box-shadow:0 8px 18px #4057d62b}
+button.primary:disabled{opacity:.45;cursor:not-allowed}
+.intro{text-align:center;padding:14px 0 4px}
+.bigicon{width:82px;height:82px;border-radius:26px;margin:0 auto 16px;display:grid;place-items:center;background:var(--pale);font-size:39px}
+.intro p{color:var(--muted);line-height:1.65}
+.rules{display:grid;gap:9px;text-align:left;margin:22px 0}
+.rule{display:flex;gap:10px;align-items:flex-start;background:#f8f9ff;border-radius:13px;padding:12px;font-size:14px}
+.rule span:first-child{font-size:18px}
+.result{text-align:center}
+.scorecircle{--score-deg:0deg;--score-color:var(--blue);width:140px;height:140px;background:conic-gradient(var(--score-color) 0deg var(--score-deg),#e6eaff var(--score-deg) 360deg);border:0;border-radius:50%;margin:10px auto 18px;display:grid;place-content:center;position:relative;isolation:isolate}.scorecircle::before{content:"";position:absolute;inset:9px;background:#fff;border-radius:50%;z-index:-1}
+.scorecircle strong{font-size:35px;line-height:1.1}
+.scorecircle span{font-size:12px;color:var(--muted);margin-top:5px}
+.result h2{font-size:27px;margin:8px 0}
+.result p{color:var(--muted);line-height:1.6}
+.resultgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin:22px 0}
+.resultitem{background:#f6f7ff;border-radius:14px;padding:14px 6px}
+.resultitem strong{display:block;font-size:23px}
+.resultitem span{font-size:12px;color:var(--muted)}
+.subtests{display:grid;gap:12px;text-align:left;margin:22px 0}.subtest-card{border:1px solid #e3e7f5;border-radius:18px;padding:18px;background:#f9faff}.subtest-card h3{margin:0 0 8px}.subtest-card p{margin:0 0 12px;font-size:14px;line-height:1.6}.subtest-card .primary{width:100%}.subtest-card.done{border-color:#2da779;background:#f0fbf5}.subtest-card.locked{opacity:.65}.subtest-card .subtest-kicker{font-size:11px;font-weight:800;letter-spacing:.08em;color:var(--blue);margin-bottom:7px}.result-subtest{border:1px solid #e3e7f5;border-radius:18px;padding:17px;text-align:left;background:#f9faff;margin:12px 0}.result-subtest h3{margin:0 0 5px}.result-subtest p{margin:0 0 14px;font-size:13px;color:var(--muted);line-height:1.5}.result-subtest .resultgrid{grid-template-columns:repeat(3,1fr);margin:10px 0 0}.result-subtest .resultitem{padding:12px 5px}.result-subtest .resultitem strong{font-size:20px}.hidden{display:none!important}
+footer{text-align:center;color:#7a8098;font-size:12px;margin-top:16px}
+@media(max-width:420px){.stats{gap:7px}.stat{padding:10px}.stat strong{font-size:15px}.hearts{font-size:16px;letter-spacing:0}.actions{flex-direction:column}}
+
+/* Animasi halus agar perpindahan layar dan elemen terasa lebih hidup */
+@keyframes screenIn{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:translateY(0)}}
+@keyframes optionIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+@keyframes softPop{0%{opacity:0;transform:scale(.88)}70%{transform:scale(1.035)}100%{opacity:1;transform:scale(1)}}
+@keyframes resultRise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+main.panel>section:not(.hidden){animation:screenIn .34s ease-out both}
+.option{animation:optionIn .28s ease-out both}
+.option:nth-child(1){animation-delay:.025s}
+.option:nth-child(2){animation-delay:.055s}
+.option:nth-child(3){animation-delay:.085s}
+.option:nth-child(4){animation-delay:.115s}
+.option:nth-child(5){animation-delay:.145s}
+.bigicon{animation:softPop .42s cubic-bezier(.2,.8,.2,1) both}
+.scorecircle{animation:softPop .55s cubic-bezier(.2,.8,.2,1) both}
+.resultitem,.result-subtest{animation:resultRise .38s ease-out both}
+.resultitem:nth-child(2){animation-delay:.05s}
+.resultitem:nth-child(3){animation-delay:.1s}
+button.primary{transition:transform .16s ease,box-shadow .16s ease,filter .16s ease}
+button.primary:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 11px 22px #4057d638;filter:brightness(1.04)}
+button.primary:active:not(:disabled){transform:translateY(0) scale(.985)}
+@media(prefers-reduced-motion:reduce){
+ *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+}
+
+
+.option.selected{border-color:var(--blue);background:#f0f2ff;box-shadow:0 0 0 2px #4057d61a}
+.option.selected .letter{background:var(--blue);color:#fff}
+.actions.quiz-actions{flex-wrap:wrap}
+#checkBtn{flex:1 1 100%}
+button.secondary{border:1px solid #d9deef;border-radius:14px;background:#f7f8ff;color:var(--ink);font-weight:750;font-size:15px;padding:13px 18px;cursor:pointer}
+button.surrender{border:1px solid #f0c6cc;border-radius:14px;background:#fff5f6;color:#a52c40;font-weight:750;font-size:14px;padding:12px 16px;cursor:pointer}
+.quiz-bottom-actions{display:flex;gap:10px;margin-top:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.modal-backdrop{position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:20px;background:radial-gradient(ellipse at 18% 12%,rgba(123,108,240,.22),transparent 42%),radial-gradient(ellipse at 85% 88%,rgba(73,207,190,.19),transparent 40%),rgba(18,27,58,.20);backdrop-filter:blur(14px) saturate(1.25);-webkit-backdrop-filter:blur(14px) saturate(1.25);animation:screenIn .22s ease-out both}
+.confirm-modal{position:relative;isolation:isolate;overflow:hidden;width:min(420px,100%);background:linear-gradient(145deg,rgba(255,255,255,.72),rgba(246,249,255,.56) 48%,rgba(232,240,255,.62));border:1px solid rgba(255,255,255,.96);border-top-color:#fff;border-radius:28px;padding:25px;box-shadow:inset 0 1px 0 rgba(255,255,255,.98),inset 0 -1px 0 rgba(130,151,210,.16),0 2px 5px rgba(255,255,255,.65),0 24px 70px rgba(20,30,70,.24),0 0 0 1px rgba(160,177,230,.14);text-align:center;animation:softPop .25s cubic-bezier(.2,.8,.2,1) both}.confirm-modal::before{content:"";position:absolute;inset:0 0 auto;height:48%;z-index:-1;pointer-events:none;background:linear-gradient(165deg,rgba(255,255,255,.98),rgba(255,255,255,.32) 38%,rgba(255,255,255,0) 78%);border-radius:inherit}.confirm-modal::after{content:"";position:absolute;top:-55%;right:-22%;width:72%;height:95%;z-index:-1;pointer-events:none;border-radius:50%;background:radial-gradient(ellipse,rgba(255,255,255,.72),rgba(255,255,255,.12) 42%,transparent 72%);transform:rotate(-18deg)}
+.confirm-modal .modal-icon{width:58px;height:58px;border-radius:18px;background:#fff0f2;color:#b52d42;display:grid;place-items:center;font-size:28px;margin:0 auto 13px}
+.confirm-modal h2{margin:0 0 9px;font-size:22px}
+.confirm-modal p{margin:0;color:var(--muted);font-size:14px;line-height:1.6}
+.modal-actions{display:flex;gap:10px;margin-top:21px}
+.modal-actions button{flex:1}
+@media(max-width:420px){.quiz-bottom-actions{align-items:stretch;flex-direction:column}.quiz-bottom-actions button{width:100%}.modal-actions{flex-direction:column}}\n@supports (backdrop-filter: blur(1px)){.confirm-modal{backdrop-filter:saturate(1.55) blur(12px);-webkit-backdrop-filter:saturate(1.55) blur(12px)}}
+
+
+.life-display{display:flex;align-items:center;gap:7px;min-height:28px;flex-wrap:wrap}
+.life-hearts{display:flex;align-items:center;gap:3px}
+.life-heart{width:21px;height:21px;display:inline-flex;align-items:center;justify-content:center;color:#ef476f;filter:drop-shadow(0 1px 1px #ef476f22);transition:color .2s ease,transform .2s ease}
+.life-heart svg{width:100%;height:100%;fill:currentColor;stroke:currentColor;stroke-width:1.5}
+.life-heart.dead{color:#252936;filter:none}
+.life-count{font-weight:850;letter-spacing:.2px;font-variant-numeric:tabular-nums}
+.life-warning .confirm-modal{border-color:rgba(255,255,255,.9)}
+.life-warning .modal-icon{background:#fff0f2;color:#d12d49}
+
+
+/* Micro-interaksi tombol: responsif, ringan, dan tetap menghormati reduced-motion */
+button, .option{
+  -webkit-tap-highlight-color:transparent;
+}
+button.secondary, button.surrender{
+  transition:transform .16s ease, box-shadow .18s ease, background-color .18s ease, border-color .18s ease, filter .18s ease;
+}
+button.secondary:hover:not(:disabled){
+  transform:translateY(-2px);
+  box-shadow:0 7px 16px rgba(45,61,120,.12);
+  border-color:#b9c4f3;
+  filter:brightness(1.025);
+}
+button.surrender:hover:not(:disabled){
+  transform:translateY(-2px);
+  box-shadow:0 7px 16px rgba(195,61,81,.12);
+  border-color:#e6a5af;
+  filter:brightness(1.02);
+}
+button.secondary:active:not(:disabled), button.surrender:active:not(:disabled){
+  transform:translateY(0) scale(.975);
+  box-shadow:inset 0 2px 5px rgba(35,45,90,.08);
+}
+button:focus-visible, .option:focus-visible{
+  outline:3px solid rgba(64,87,214,.35);
+  outline-offset:3px;
+}
+.modal-actions button{
+  animation:optionIn .28s ease-out both;
+}
+.modal-actions button:nth-child(2){animation-delay:.055s}
+.subtest-card .primary, #restartBtn, #dismissOneLifeBtn, #showFinalResultBtn, #confirmSurrenderBtn, #cancelSurrenderBtn{
+  position:relative;
+  overflow:hidden;
+}
+.subtest-card .primary::after, #restartBtn::after, #dismissOneLifeBtn::after, #showFinalResultBtn::after, #confirmSurrenderBtn::after, #cancelSurrenderBtn::after{
+  content:"";
+  position:absolute;
+  top:-60%;
+  left:-75%;
+  width:45%;
+  height:220%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.28),transparent);
+  transform:rotate(22deg);
+  transition:left .45s ease;
+  pointer-events:none;
+}
+.subtest-card .primary:hover:not(:disabled)::after, #restartBtn:hover:not(:disabled)::after, #dismissOneLifeBtn:hover:not(:disabled)::after, #showFinalResultBtn:hover:not(:disabled)::after, #confirmSurrenderBtn:hover:not(:disabled)::after, #cancelSurrenderBtn:hover:not(:disabled)::after{
+  left:135%;
+}
+@media(prefers-reduced-motion:reduce){
+  button.secondary, button.surrender, .modal-actions button,
+  .subtest-card .primary::after, #restartBtn::after, #dismissOneLifeBtn::after,
+  #showFinalResultBtn::after, #confirmSurrenderBtn::after, #cancelSurrenderBtn::after{
+    transition:none!important;
+    animation:none!important;
+  }
+}
+
+
+/* Liquid-glass review screen */
+.review-top{display:flex;gap:9px;flex-wrap:wrap;margin:16px 0}
+.review-topic{flex:1;min-width:130px;border:1px solid rgba(255,255,255,.9);border-radius:14px;padding:11px 14px;background:linear-gradient(145deg,rgba(255,255,255,.78),rgba(235,241,255,.58));color:var(--ink);font-weight:800;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 7px 18px rgba(41,51,92,.08);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);transition:transform .18s,background .18s,box-shadow .18s}
+.review-topic.active{background:linear-gradient(145deg,rgba(64,87,214,.18),rgba(255,255,255,.78));border-color:rgba(64,87,214,.38);box-shadow:inset 0 1px 0 #fff,0 0 0 2px rgba(64,87,214,.08),0 8px 20px rgba(64,87,214,.12)}
+.review-topic:hover,.review-number:hover{transform:translateY(-2px)}
+.review-slider{display:flex;gap:8px;overflow-x:auto;padding:9px 4px 14px;margin:4px 0 17px;scroll-snap-type:x mandatory;scrollbar-width:thin;scrollbar-color:#b9c4ef transparent}
+.review-slider::-webkit-scrollbar{height:6px}.review-slider::-webkit-scrollbar-thumb{background:#b9c4ef;border-radius:99px}
+.review-number{flex:0 0 46px;height:46px;border:1px solid rgba(255,255,255,.95);border-radius:15px;background:linear-gradient(145deg,rgba(255,255,255,.82),rgba(235,241,255,.56));color:var(--ink);font-weight:850;cursor:pointer;scroll-snap-align:center;box-shadow:inset 0 1px 0 rgba(255,255,255,.96),0 6px 16px rgba(41,51,92,.09);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);transition:transform .18s,box-shadow .18s,background .18s}
+.review-number.active{color:#fff;border-color:rgba(255,255,255,.8);background:linear-gradient(145deg,rgba(64,87,214,.94),rgba(123,108,240,.84));box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 8px 20px rgba(64,87,214,.28)}
+.review-card{position:relative;overflow:hidden;text-align:left;border:1px solid rgba(255,255,255,.94);border-radius:22px;padding:clamp(16px,4vw,23px);background:linear-gradient(145deg,rgba(255,255,255,.78),rgba(239,244,255,.56) 55%,rgba(230,249,244,.48));box-shadow:inset 0 1px 0 rgba(255,255,255,.96),0 16px 38px rgba(41,51,92,.1);backdrop-filter:blur(16px) saturate(1.3);-webkit-backdrop-filter:blur(16px) saturate(1.3);animation:screenIn .25s ease-out both}
+.review-card h3{font-size:clamp(18px,4vw,22px);line-height:1.45;margin:8px 0 18px}
+.review-kicker{font-size:11px;letter-spacing:.09em;font-weight:900;color:var(--blue)}
+.review-answer{padding:13px 14px;border-radius:14px;margin:10px 0;line-height:1.55;font-size:14px}
+.review-answer.yes{background:rgba(220,249,235,.72);border:1px solid rgba(45,167,121,.24)}
+.review-answer.no{background:rgba(255,233,237,.76);border:1px solid rgba(219,104,119,.26)}
+.review-answer.neutral{background:rgba(255,255,255,.55);border:1px solid rgba(255,255,255,.85)}
+.review-explanation{font-size:14px;line-height:1.65;color:var(--muted);margin:14px 0 0}
+.review-actions{display:flex;gap:10px;margin-top:16px}.review-actions button{min-width:0}
+#finishReviewModal{z-index:70}
+@media(max-width:420px){.review-actions{flex-direction:column}.review-number{flex-basis:43px;height:43px}}
+
+
+/* Liquid glass untuk seluruh popup dan freeze halaman di belakangnya */
+.modal-backdrop{
+  position:fixed!important; inset:0!important; z-index:100!important;
+  overflow:hidden!important; overscroll-behavior:contain;
+  touch-action:none;
+  background:radial-gradient(ellipse at 18% 12%,rgba(123,108,240,.28),transparent 42%),
+    radial-gradient(ellipse at 85% 88%,rgba(73,207,190,.22),transparent 40%),
+    rgba(15,22,48,.34)!important;
+  backdrop-filter:blur(18px) saturate(1.45)!important;
+  -webkit-backdrop-filter:blur(18px) saturate(1.45)!important;
+}
+.confirm-modal{
+  background:linear-gradient(145deg,rgba(255,255,255,.78),rgba(245,248,255,.60) 48%,rgba(225,239,255,.68))!important;
+  border:1px solid rgba(255,255,255,.88)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.98),inset 0 -1px 0 rgba(130,151,210,.2),
+    0 28px 90px rgba(9,16,48,.34),0 0 0 1px rgba(180,198,255,.18)!important;
+  backdrop-filter:blur(22px) saturate(1.65)!important;
+  -webkit-backdrop-filter:blur(22px) saturate(1.65)!important;
+  transform:none!important;
+  touch-action:pan-y;
+}
+.confirm-modal::before{background:linear-gradient(165deg,rgba(255,255,255,.98),rgba(255,255,255,.38) 40%,transparent 80%)!important}
+body.modal-open{position:fixed!important;overflow:hidden!important;width:100%;overscroll-behavior:none}
+.modal-backdrop.hidden{display:none!important}
+#exportXlsxBtn{margin-top:10px;width:100%}
+
+
+/* Liquid-glass refresh: indikator dan seluruh elemen UI biasa */
+:root{--glass-line:rgba(255,255,255,.82);--glass-shadow:0 14px 34px rgba(34,48,105,.10)}
+body{background:radial-gradient(ellipse at 12% 4%,rgba(139,126,255,.20),transparent 38%),radial-gradient(ellipse at 90% 88%,rgba(89,218,194,.18),transparent 38%),linear-gradient(145deg,#e9edff,#f9fbff 48%,#e6f8f3)!important;background-attachment:fixed!important}
+.logo,.bigicon{background:linear-gradient(145deg,rgba(255,255,255,.82),rgba(225,234,255,.58))!important;border:1px solid rgba(255,255,255,.9);color:var(--blue)!important;box-shadow:inset 0 1px 0 #fff,0 12px 28px rgba(47,63,130,.12);backdrop-filter:blur(16px) saturate(1.4);-webkit-backdrop-filter:blur(16px) saturate(1.4)}
+.panel,.stat,.rule,.subtest-card,.result-subtest,.resultitem,.feedback,.tag,.scorecircle,.name-entry input,.option,button.primary,button.secondary,button.surrender{backdrop-filter:blur(16px) saturate(1.35);-webkit-backdrop-filter:blur(16px) saturate(1.35)}
+.panel{position:relative;overflow:hidden;background:linear-gradient(145deg,rgba(255,255,255,.78),rgba(245,248,255,.62) 55%,rgba(229,247,244,.58))!important;border:1px solid rgba(255,255,255,.92)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.98),inset 0 -1px 0 rgba(140,160,220,.12),0 24px 60px rgba(31,44,100,.12)!important}
+.panel::before{content:"";position:absolute;inset:0 0 auto;height:34%;pointer-events:none;background:linear-gradient(170deg,rgba(255,255,255,.55),transparent 78%);z-index:0}.panel>section{position:relative;z-index:1}
+.stat,.rule,.subtest-card,.result-subtest,.resultitem{border:1px solid rgba(255,255,255,.88)!important;background:linear-gradient(145deg,rgba(255,255,255,.74),rgba(235,241,255,.48))!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 8px 22px rgba(42,55,120,.07)!important}
+.progressrow{align-items:center;font-weight:750;color:#536087!important}
+.track{height:17px!important;padding:3px!important;border:1px solid rgba(255,255,255,.92)!important;background:linear-gradient(145deg,rgba(255,255,255,.65),rgba(216,226,250,.45))!important;box-shadow:inset 0 2px 5px rgba(39,52,111,.10),0 5px 14px rgba(43,59,128,.06)!important;backdrop-filter:blur(14px) saturate(1.4);-webkit-backdrop-filter:blur(14px) saturate(1.4)}
+.bar{position:relative;border-radius:999px;background:linear-gradient(100deg,#6378ed 0%,#9b83f5 48%,#62d8c5 100%)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.65),0 2px 8px rgba(87,105,219,.30)!important;overflow:hidden}
+.bar::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 12%,rgba(255,255,255,.62) 48%,transparent 82%);border-radius:inherit;pointer-events:none}
+.option{border:1px solid rgba(255,255,255,.92)!important;background:linear-gradient(145deg,rgba(255,255,255,.82),rgba(239,244,255,.58))!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 7px 18px rgba(39,54,120,.06)!important;border-radius:18px!important}
+.option:hover:not(:disabled){background:linear-gradient(145deg,rgba(255,255,255,.94),rgba(224,234,255,.72))!important;box-shadow:inset 0 1px 0 #fff,0 10px 22px rgba(58,76,165,.12)!important}
+.option .letter{background:linear-gradient(145deg,rgba(255,255,255,.92),rgba(220,229,255,.72))!important;border:1px solid rgba(255,255,255,.9);box-shadow:inset 0 1px 0 #fff}
+.option.correct{background:linear-gradient(145deg,rgba(222,250,237,.88),rgba(194,240,220,.64))!important;border-color:rgba(45,167,121,.48)!important}.option.wrong{background:linear-gradient(145deg,rgba(255,235,239,.9),rgba(255,213,220,.66))!important;border-color:rgba(219,104,119,.5)!important}
+button.primary{background:linear-gradient(135deg,rgba(76,98,225,.96),rgba(126,108,240,.92))!important;border:1px solid rgba(255,255,255,.46)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.42),0 10px 24px rgba(64,87,214,.25)!important}
+button.secondary{background:linear-gradient(145deg,rgba(255,255,255,.82),rgba(231,238,255,.58))!important;border:1px solid rgba(255,255,255,.9)!important;box-shadow:inset 0 1px 0 #fff,0 7px 18px rgba(39,54,120,.08)!important}
+button.surrender{background:linear-gradient(145deg,rgba(255,255,255,.82),rgba(255,228,233,.62))!important;border:1px solid rgba(255,255,255,.9)!important;box-shadow:inset 0 1px 0 #fff,0 7px 18px rgba(140,45,68,.08)!important}
+.tag{background:linear-gradient(145deg,rgba(255,255,255,.82),rgba(224,232,255,.62))!important;border:1px solid rgba(255,255,255,.9);box-shadow:inset 0 1px 0 #fff,0 5px 12px rgba(39,54,120,.06)}
+.feedback.good{background:linear-gradient(145deg,rgba(230,251,241,.88),rgba(202,241,222,.68))!important;border:1px solid rgba(255,255,255,.9)}.feedback.bad{background:linear-gradient(145deg,rgba(255,240,243,.9),rgba(255,218,225,.68))!important;border:1px solid rgba(255,255,255,.9)}
+.name-entry input{background:linear-gradient(145deg,rgba(255,255,255,.88),rgba(239,244,255,.68))!important;border:1px solid rgba(255,255,255,.95)!important;box-shadow:inset 0 1px 0 #fff,0 6px 15px rgba(39,54,120,.05)}
+.scorecircle{background:conic-gradient(var(--score-color) 0deg var(--score-deg),rgba(255,255,255,.55) var(--score-deg) 360deg)!important;filter:drop-shadow(0 12px 20px rgba(54,70,150,.12))}.scorecircle::before{background:linear-gradient(145deg,rgba(255,255,255,.9),rgba(235,241,255,.72))!important;border:1px solid rgba(255,255,255,.92);box-shadow:inset 0 1px 0 #fff}
+@media(prefers-reduced-motion:reduce){.bar::after{display:none}}
+
+
+/* QuizEn: konsistensi liquid glass putih, indikator satu warna, pilihan jawaban jelas */
+:root{--quiz-glass-white:rgba(255,255,255,.88);--quiz-glass-edge:rgba(255,255,255,.98);--quiz-glass-shadow:0 12px 30px rgba(35,48,91,.09)}
+/* Progress indicator: satu warna solid */
+.bar{background:#6478e8!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.72),0 2px 8px rgba(100,120,232,.24)!important}
+.bar::after{background:linear-gradient(180deg,rgba(255,255,255,.45),rgba(255,255,255,0))!important}
+/* Surface putih glass untuk elemen UI biasa */
+.panel,.stat,.rule,.subtest-card,.result-subtest,.resultitem,.feedback,.tag,.scorecircle,.name-entry input,.option,button.primary,button.secondary,button.surrender{
+  border-color:var(--quiz-glass-edge)!important;
+}
+.panel{background:linear-gradient(145deg,rgba(255,255,255,.94),rgba(255,255,255,.76))!important}
+.stat,.rule,.subtest-card,.result-subtest,.resultitem{
+  background:linear-gradient(145deg,rgba(255,255,255,.94),rgba(255,255,255,.72))!important;
+  box-shadow:inset 0 1px 0 #fff,var(--quiz-glass-shadow)!important;
+}
+.tag{background:linear-gradient(145deg,rgba(255,255,255,.96),rgba(255,255,255,.78))!important;color:#4057b8!important}
+.name-entry input{background:linear-gradient(145deg,rgba(255,255,255,.98),rgba(255,255,255,.82))!important}
+button.secondary{background:linear-gradient(145deg,rgba(255,255,255,.96),rgba(255,255,255,.78))!important}
+button.surrender{background:linear-gradient(145deg,rgba(255,255,255,.96),rgba(255,255,255,.78))!important;color:#9b3344!important}
+/* Jawaban terpilih: outline ungu saja, tanpa tanda centang */
+.option.selected{
+  outline:3px solid #8b5cf6!important;
+  outline-offset:2px!important;
+  border-color:rgba(139,92,246,.45)!important;
+  box-shadow:inset 0 1px 0 #fff!important;
+}
+.option.selected .letter{
+  background:inherit!important;
+  color:inherit!important;
+  border-color:inherit!important;
+  box-shadow:none!important;
+}
+.option.selected::after{content:none!important}
+.option.correct{border:2px solid #16845b!important;outline:1px solid rgba(22,132,91,.18)!important}
+.option.wrong{border:2px solid #b52d42!important;outline:1px solid rgba(181,45,66,.18)!important}
+/* Header dan tombol juga mempertahankan permukaan putih/transparan */
+.logo{background:linear-gradient(145deg,rgba(255,255,255,.98),rgba(255,255,255,.78))!important;color:#4057b8!important}
+button.primary{box-shadow:inset 0 1px 0 rgba(255,255,255,.55),0 10px 24px rgba(64,87,214,.2)!important}
+
+
+
+/* QuizEn responsive compatibility: phones, tablets, desktops, landscape and safe-area screens */
+html{width:100%;min-width:0;min-height:100%;-webkit-text-size-adjust:100%;text-size-adjust:100%;scroll-padding-top:env(safe-area-inset-top)}
+body{width:100%;min-width:0;min-height:100vh;min-height:100dvh;overflow-x:hidden}
+.wrap{width:100%;max-width:792px;padding:clamp(12px,3.5vw,24px) clamp(12px,3.5vw,20px) calc(28px + env(safe-area-inset-bottom))}
+header,main.panel,section,.stats,.stat,.question,.options,.option,.actions,.quiz-bottom-actions,.resultgrid,.result-subtest,.review-card{min-width:0;max-width:100%}
+.question,.subtitle,.intro p,.rule,.subtest-card p,.result p,.confirm-modal p,.review-card,.feedback{overflow-wrap:anywhere;word-break:normal}
+.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(7px,2vw,10px)}
+.stat{padding:clamp(9px,2.5vw,12px)}
+.resultgrid{grid-template-columns:repeat(3,minmax(0,1fr))}
+.option{width:100%;min-height:48px;align-items:center;overflow-wrap:anywhere;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+button,input{max-width:100%;touch-action:manipulation}
+button{min-height:44px}
+.name-entry input{font-size:16px!important;min-height:46px}
+.modal-backdrop{padding:clamp(10px,3vw,20px);padding-top:max(10px,env(safe-area-inset-top));padding-bottom:max(10px,env(safe-area-inset-bottom));overflow-y:auto;overscroll-behavior:contain}
+.confirm-modal{width:min(420px,100%);max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflow-y:auto;overscroll-behavior:contain;padding:clamp(18px,4vw,25px)}
+.modal-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.modal-actions>*{flex:1 1 130px;min-width:0}
+.review-top{display:flex;gap:8px;flex-wrap:wrap;min-width:0}
+.review-topic{min-width:0;flex:1 1 130px}
+.review-slider{max-width:100%;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}
+.review-actions{display:flex;flex-wrap:wrap}
+.review-actions button{flex:1 1 140px}
+@media(max-width:600px){
+  header{gap:10px;margin-top:4px}
+  .logo{width:42px;height:42px;flex:0 0 42px;border-radius:13px}
+  .subtitle{font-size:12px}
+  .panel{border-radius:22px;padding:clamp(14px,4vw,20px)}
+  .question{font-size:clamp(18px,5vw,22px);margin-bottom:16px}
+  .option{padding:12px;gap:9px}
+  .option .letter{flex:0 0 26px;width:26px;height:26px}
+  .actions{gap:8px}
+  .quiz-bottom-actions{align-items:stretch}
+  .quiz-bottom-actions #selectionHint{flex:1 1 100%;line-height:1.5}
+  .quiz-bottom-actions button{width:100%}
+  .resultgrid{gap:7px}
+  .resultitem{padding:11px 4px}
+  .resultitem strong{font-size:clamp(16px,5vw,22px)}
+  .resultitem span{font-size:11px}
+  .result-subtest{padding:12px}
+}
+@media(max-width:360px){
+  .wrap{padding-left:10px;padding-right:10px}
+  .panel{padding:13px;border-radius:19px}
+  .stats{gap:6px}
+  .stat small{font-size:10px}
+  .stat strong{font-size:14px}
+  .hearts{font-size:14px}
+  .resultgrid{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .resultitem strong{font-size:15px}
+  .resultitem span{font-size:10px}
+  .confirm-modal{border-radius:22px}
+}
+@media(max-width:320px){
+  .progressrow{font-size:11px;gap:5px}
+  .tag{font-size:10px}
+  .option{font-size:14px;padding:10px}
+  .actions button,.modal-actions button{font-size:14px;padding:12px}
+}
+@media(orientation:landscape) and (max-height:500px){
+  header{margin:0 0 10px}
+  .wrap{padding-top:8px}
+  .confirm-modal{max-height:calc(100dvh - 16px);padding:14px 18px}
+  .confirm-modal h2{font-size:20px;margin:8px 0}
+  .confirm-modal p{margin:8px 0;font-size:13px}
+  .modal-icon{margin-bottom:7px!important}
+}
+@supports not (height:100dvh){body{min-height:100vh}.confirm-modal{max-height:calc(100vh - 24px)}}
+@supports (padding:max(0px)){.wrap{padding-bottom:max(28px,env(safe-area-inset-bottom))}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><div class="logo">Q</div><div><h1>QuizEn</h1><p class="subtitle">Gerund &amp; Conditional Sentences</p></div></header>
+<main class="panel">
+<section id="startScreen" class="intro">
+<div class="bigicon" id="introIcon">📘</div>
+<h2 id="introTitle">Subtes 1 · Gerund</h2>
+<p id="introLead" class="hidden"></p>
+<div id="nameEntry" class="name-entry" style="text-align:left;margin:0 0 16px">
+<label for="playerName" style="display:block;font-weight:700;margin-bottom:7px">Nama peserta</label>
+<input id="playerName" type="text" maxlength="40" autocomplete="name" placeholder="Ketik namamu di sini" style="width:100%;padding:13px 14px;border:1px solid #d9deef;border-radius:12px;font:inherit;color:var(--ink);background:#fff">
+<p style="font-size:12px;color:var(--muted);margin:6px 0 0">Namamu akan ditampilkan pada hasil akhir.</p>
+</div>
+<div class="subtests">
+<div id="gerundCard" class="subtest-card">
+<div class="subtest-kicker" id="activeKicker">SUBTES 1 DARI 2</div>
+<h3 id="activeSubtestName">Gerund</h3>
+<p id="activeSubtestDescription">Pada subtes ini, kamu akan diuji tentang penggunaan gerund (verb + -ing), termasuk gerund setelah kata kerja dan preposisi, serta gerund sebagai subjek atau objek kalimat.</p>
+<p id="activeSubtestStatus">10 soal · Belum dikerjakan</p>
+<button class="primary" id="startActiveBtn">Mulai subtes</button>
+</div>
+</div>
+<div id="menuLifeStat" class="stat hidden" style="text-align:left;margin:0 0 14px"><small>SISA NYAWA SETELAH SUBTES 1</small><strong id="menuLives" class="hearts">x5</strong></div>
+<div class="rules">
+<div class="rule"><span>❤️</span><span><b>Nyawa: x5</b><br>Jawaban salah mengurangi satu nyawa. Setiap 3 jawaban benar berturut-turut memberi bonus +1 nyawa.</span></div>
+<div class="rule"><span>📝</span><span><b>5 pilihan jawaban</b><br>Pilih A, B, C, D, atau E. Setiap jawaban benar bernilai 5 poin.</span></div>
+</div>
+</section>
+<section id="quizScreen" class="hidden">
+<div class="stats">
+<div class="stat"><small>SOAL</small><strong id="count">1 / 10</strong></div>
+
+<div class="stat life-stat"><small>NYAWA</small><strong id="lives" class="life-display"><span id="lifeHearts" class="life-hearts" aria-label="Nyawa"></span><span id="lifeCount" class="life-count">x5</span></strong><div id="lifeToast" class="life-toast" role="status" aria-live="polite">+1</div><div id="streakText" style="font-size:11px;color:#68708b;margin-top:3px">Rentetan benar: 0/3</div></div>
+</div>
+<div class="progressrow"><span id="sectionName">Gerund</span><span id="progressText">0% subtes selesai</span></div>
+<div class="track"><div id="progressBar" class="bar"></div></div>
+<div class="tag" id="topicTag">GERUND</div>
+<h2 class="question" id="questionText"></h2>
+<div class="options" id="options"></div>
+<div class="feedback" id="feedback" role="status" aria-live="polite"></div>
+<div class="actions quiz-actions"><button class="primary" id="checkBtn" disabled>Periksa jawaban</button><button class="primary" id="nextBtn" disabled>Lanjut ke soal berikutnya →</button></div><div class="quiz-bottom-actions"><span id="selectionHint" style="font-size:12px;color:var(--muted)">Pilih jawaban, lalu tekan “Periksa jawaban”.</span><button class="surrender" id="surrenderBtn" type="button">Menyerah</button></div>
+</section>
+<section id="resultScreen" class="result hidden">
+<div class="bigicon">🏆</div>
+<h2 id="resultTitle">Kuis selesai!</h2>
+<p id="resultMessage"></p>
+<div class="scorecircle" id="scoreCircle"><strong id="finalScore">0</strong><span> dari 100 poin total</span></div>
+<div class="resultgrid"><div class="resultitem"><strong id="totalScore">0 / 100</strong><span>Total nilai</span></div><div class="resultitem"><strong id="correctCount">0</strong><span>Total benar</span></div><div class="resultitem"><strong id="wrongCount">0</strong><span>Total salah</span></div></div>
+<h3>Rekap tiap subtes</h3>
+<div class="result-subtest" id="gerundResultCard"><h3>Subtes 1 · Gerund</h3><p>Gerund (verb + -ing), penggunaannya setelah kata kerja dan preposisi, serta sebagai subjek atau objek kalimat.</p><div class="resultgrid"><div class="resultitem"><strong id="gerundScore">0 / 50</strong><span>Nilai</span></div><div class="resultitem"><strong id="gerundCorrectCount">0</strong><span>Benar</span></div><div class="resultitem"><strong id="gerundWrongCount">0</strong><span>Salah</span></div></div></div>
+<div class="result-subtest" id="conditionalResultCard"><h3>Subtes 2 · Conditional Sentences</h3><p>Zero, first, second, dan third conditional serta pola kalimat pengandaian dan akibatnya.</p><div class="resultgrid"><div class="resultitem"><strong id="conditionalScore">0 / 50</strong><span>Nilai</span></div><div class="resultitem"><strong id="conditionalCorrectCount">0</strong><span>Benar</span></div><div class="resultitem"><strong id="conditionalWrongCount">0</strong><span>Salah</span></div></div></div>
+<div class="resultgrid"><div class="resultitem"><strong id="remainingLives">0</strong><span>Nyawa tersisa</span></div></div>
+<p id="finishReason"></p>
+<div class="actions" style="flex-wrap:wrap"><button class="secondary" id="reviewBtn" type="button">Review jawaban</button><button class="primary" id="restartBtn">Main lagi</button></div><button class="secondary" id="exportXlsxBtn" type="button">⬇ Simpan hasil jawaban (.xlsx)</button>
+</section>
+
+<section id="reviewScreen" class="hidden">
+  <div class="intro" style="padding:4px 0 0">
+    <div class="bigicon" style="margin-bottom:10px">🔎</div>
+    <h2 style="margin:0 0 7px">Review Jawaban</h2>
+    <p style="margin:0">Lihat jawaban yang kamu pilih, kunci jawaban, dan pembahasannya.</p>
+  </div>
+  <div id="reviewTopicTabs" class="review-top"></div>
+  <div id="reviewNumberSlider" class="review-slider" aria-label="Pilih nomor soal review"></div>
+  <article id="reviewQuestionCard" class="review-card"></article>
+  <div class="review-actions">
+    <button class="secondary" id="reviewPrevBtn" type="button">← Sebelumnya</button>
+    <button class="secondary" id="reviewNextBtn" type="button">Berikutnya →</button>
+  </div>
+  <button class="primary" id="finishReviewBtn" type="button" style="width:100%;margin-top:12px">Selesaikan review</button>
+</section>
+</main>
+<footer>Quis Bahasa Inggris · Latihan grammar</footer>
+</div>
+
+<div id="surrenderModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="surrenderTitle">
+  <div class="confirm-modal">
+    <div class="modal-icon">⚠️</div>
+    <h2 id="surrenderTitle">Apakah kamu yakin ingin menyerah?</h2>
+    <p>Jika menyerah, soal ini dihitung salah dan nyawamu berkurang 1. Setelah itu, bonus nyawa dari 3 jawaban benar berturut-turut tidak bisa didapatkan lagi selama permainan ini.</p>
+    <div class="modal-actions"><button class="secondary" id="cancelSurrenderBtn" type="button">Batal</button><button class="primary" id="confirmSurrenderBtn" type="button">Ya, menyerah</button></div>
+  </div>
+</div>
+
+
+<div id="oneLifeModal" class="modal-backdrop life-warning hidden" role="alertdialog" aria-modal="true" aria-labelledby="oneLifeTitle">
+  <div class="confirm-modal">
+    <div class="modal-icon">♥</div>
+    <h2 id="oneLifeTitle">Nyawa tersisa 1, ayo lebih fokus!</h2>
+    <p>Perhatikan soal dan pilihan jawaban dengan teliti sebelum melanjutkan.</p>
+    <div class="modal-actions"><button class="primary" id="dismissOneLifeBtn" type="button">Baik, aku fokus!</button></div>
+  </div>
+</div>
+
+<div id="gameOverModal" class="modal-backdrop hidden" role="alertdialog" aria-modal="true" aria-labelledby="gameOverTitle">
+  <div class="confirm-modal">
+    <div class="modal-icon">💔</div>
+    <h2 id="gameOverTitle">Game over! Silahkan lihat hasil akhir pengerjaan</h2>
+    <p>Nyawamu sudah habis. Buka hasil akhir untuk melihat rekap pengerjaanmu.</p>
+    <div class="modal-actions"><button class="primary" id="showFinalResultBtn" type="button">Lihat hasil akhir</button></div>
+  </div>
+</div>
+
+
+<div id="finishReviewModal" class="modal-backdrop hidden" role="alertdialog" aria-modal="true" aria-labelledby="finishReviewTitle">
+  <div class="confirm-modal">
+    <div class="modal-icon" style="background:rgba(225,235,255,.85);color:var(--blue)">✓</div>
+    <h2 id="finishReviewTitle">Selesaikan review?</h2>
+    <p>Review jawaban akan ditutup dan kamu akan kembali ke halaman hasil akhir.</p>
+    <div class="modal-actions">
+      <button class="secondary" id="cancelFinishReviewBtn" type="button">Lanjut review</button>
+      <button class="primary" id="confirmFinishReviewBtn" type="button">Ya, selesai</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script>
+const questions = [
+{topic:"Gerund",q:"Choose the correct form: “She enjoys ___ novels in her free time.”",o:["to read","reading","read","having read","reads"],a:1,why:"Setelah kata kerja “enjoy”, gunakan gerund (verb + -ing): “enjoys reading”."},
+{topic:"Gerund",q:"Which sentence uses a gerund correctly?",o:["He suggested to take a taxi.","He suggested taking a taxi.","He suggested take a taxi.","He suggested to taking a taxi.","He suggested took a taxi."],a:1,why:"Kata kerja “suggest” diikuti gerund, jadi “suggested taking” benar."},
+{topic:"Gerund",q:"“___ early helps me feel prepared.” Which form completes the sentence?",o:["To wake up","Waking up","Wake up","Woken up","Wakes up"],a:1,why:"Gerund dapat berfungsi sebagai subjek kalimat: “Waking up early”."},
+{topic:"Gerund",q:"Choose the correct sentence.",o:["They are interested in learn French.","They are interested to learn French.","They are interested in learning French.","They are interested for learning French.","They are interested learning French."],a:2,why:"Setelah preposisi “in”, kata kerja menggunakan bentuk gerund: “learning”."},
+{topic:"Gerund",q:"I look forward to ___ you soon.",o:["see","seeing","saw","to see","having see"],a:1,why:"Dalam ungkapan “look forward to”, kata “to” adalah preposisi sehingga diikuti gerund: “seeing”."},
+{topic:"Gerund",q:"Which verb is commonly followed by a gerund?",o:["decide","hope","avoid","plan","expect"],a:2,why:"“Avoid” diikuti gerund, misalnya “avoid making mistakes”."},
+{topic:"Gerund",q:"Choose the correct completion: “He left without ___ goodbye.”",o:["to say","saying","say","having say","said"],a:1,why:"Setelah preposisi “without”, gunakan gerund: “without saying goodbye”."},
+{topic:"Gerund",q:"Which sentence is correct?",o:["Swim is good exercise.","Swimming is good exercise.","To swimming is good exercise.","Swam is good exercise.","To swim is good exercise."],a:1,why:"“Swimming” adalah gerund yang berfungsi sebagai subjek kalimat."},
+{topic:"Gerund",q:"My brother is good at ___ difficult problems.",o:["to solve","solve","solving","solves","having solve"],a:2,why:"Setelah preposisi “at”, gunakan gerund: “good at solving”."},
+{topic:"Gerund",q:"Choose the correct completion: “Would you mind ___ the window?”",o:["to close","close","closing","to closing","closed"],a:2,why:"Ungkapan “would you mind” diikuti gerund: “mind closing”."},
+{topic:"Conditional Sentences",q:"If you heat ice, it ___. (Zero Conditional)",o:["would melt","melts","will melt","melted","would have melted"],a:1,why:"Zero conditional menyatakan fakta umum: if + simple present, simple present."},
+{topic:"Conditional Sentences",q:"If it rains tomorrow, we ___ at home. (First Conditional)",o:["would stay","will stay","stayed","would have stayed","stay"],a:1,why:"First conditional: if + simple present, will + base verb."},
+{topic:"Conditional Sentences",q:"If I ___ more free time, I would learn Japanese. (Second Conditional)",o:["have","had","would have","will have","had had"],a:1,why:"Second conditional memakai if + simple past, lalu would + base verb."},
+{topic:"Conditional Sentences",q:"If she had studied harder, she ___ the exam. (Third Conditional)",o:["would pass","would have passed","will have passed","would had passed","passed"],a:1,why:"Third conditional memakai if + past perfect dan would have + past participle."},
+{topic:"Conditional Sentences",q:"Which sentence describes a general truth?",o:["If you mixed blue and yellow, you would get green.","If you mix blue and yellow, you get green.","If you had mixed blue and yellow, you would have got green.","If you will mix blue and yellow, you get green.","If you mix blue and yellow, you would get green."],a:1,why:"Fakta umum menggunakan zero conditional: if + simple present, simple present."},
+{topic:"Conditional Sentences",q:"If I were you, I ___ to the teacher. (Second Conditional)",o:["will talk","would talk","would have talked","talked","would talked"],a:1,why:"Pola second conditional pada klausa utama adalah would + base verb."},
+{topic:"Conditional Sentences",q:"If they leave now, they ___ the bus. (First Conditional)",o:["would catch","will catch","would have caught","catch","caught"],a:1,why:"First conditional menggunakan will + base verb untuk kemungkinan di masa depan."},
+{topic:"Conditional Sentences",q:"If he hadn't missed the train, he ___ on time. (Third Conditional)",o:["would arrive","would have arrived","will have arrived","would had arrived","arrived"],a:1,why:"Kondisi masa lalu yang tidak terjadi memakai would have + past participle."},
+{topic:"Conditional Sentences",q:"Choose the correct First Conditional sentence.",o:["If I will see her, I tell her.","If I see her, I will tell her.","If I saw her, I will tell her.","If I see her, I would tell her.","If I will see her, I will tell her."],a:1,why:"First conditional menggunakan simple present setelah “if” dan “will” pada klausa hasil."},
+{topic:"Conditional Sentences",q:"If water reaches 100°C at standard atmospheric pressure, it ___.",o:["would boil","boils","will boil","boiled","would have boiled"],a:1,why:"Ini fakta ilmiah umum, jadi zero conditional menggunakan simple present pada kedua klausa."}
+];
+let index=0,lives=5,answered=false,selectedChoice=null,wrongAttempts=0,correctStreak=0,questionsCorrect=0,toastTimer=null,bonusLifeLocked=false;
+let activeTopic="Gerund",gerundScore=0,conditionalScore=0,gerundCorrect=0,conditionalCorrect=0,gerundWrong=0,conditionalWrong=0,gerundAnswered=0,conditionalAnswered=0,gerundDone=false,conditionalDone=false,playerName="";
+let reviewHistory={"Gerund":[],"Conditional Sentences":[]},reviewTopic="Gerund",reviewIndex=0;
+const $=id=>document.getElementById(id);
+function showScreen(name){["startScreen","quizScreen","resultScreen","reviewScreen"].forEach(id=>$(id).classList.toggle("hidden",id!==name));}
+function updateMenu(){
+ const conditional=gerundDone;
+ $('introIcon').textContent=conditional?'🧩':'📘';
+ $('introTitle').textContent=conditional?'Subtes 2 · Conditional Sentences':'Subtes 1 · Gerund';
+ $('introLead').textContent='';
+ $('nameEntry').classList.toggle('hidden',conditional);
+ $('menuLifeStat').classList.toggle('hidden',!conditional);
+ $('menuLives').textContent=formatLives();
+ $('activeKicker').textContent=conditional?'SUBTES 2 DARI 2':'SUBTES 1 DARI 2';
+ $('activeSubtestName').textContent=conditional?'Conditional Sentences':'Gerund';
+ $('activeSubtestDescription').textContent=conditional?'Pada subtes ini, kamu akan diuji tentang Zero, First, Second, dan Third Conditional, termasuk pola tenses serta penggunaan kalimat pengandaian untuk fakta umum, kemungkinan, situasi khayalan, dan kondisi masa lalu.':'Pada subtes ini, kamu akan diuji tentang penggunaan gerund (verb + -ing), termasuk gerund setelah kata kerja dan preposisi, serta gerund sebagai subjek atau objek kalimat.';
+ $('activeSubtestStatus').textContent=conditional?'10 soal · Siap dikerjakan':'10 soal · Belum dikerjakan';
+ $('startActiveBtn').textContent='Mulai subtes';
+}
+function startSubtest(topic){
+ if(topic==='Conditional Sentences'&&!gerundDone)return;
+ activeTopic=topic;index=0;answered=false;correctStreak=0;questionsCorrect=0;
+ shuffleOptions(topic);
+ showScreen('quizScreen');renderQuestion();
+}
+function activeQuestions(){return questions.filter(q=>q.topic===activeTopic);}
+function shuffleOptions(topic){
+ questions.filter(q=>q.topic===topic).forEach(q=>{
+  const correctAnswer=q.o[q.a];
+  for(let i=q.o.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[q.o[i],q.o[j]]=[q.o[j],q.o[i]];}
+  q.a=q.o.indexOf(correctAnswer);
+ });
+}
+function formatLives(){return lives>5?`x5 (+${lives-5})`:`x${lives}`;}
+function updateProgressIndicator(forceComplete=false){
+ const total=activeQuestions().length;
+ const done=activeTopic==='Gerund'?gerundAnswered:conditionalAnswered;
+ const percent=forceComplete?100:Math.round(Math.min(done,total)/total*100);
+ $('progressText').textContent=`${percent}%`;
+ $('progressBar').style.width=`${percent}%`;
+}
+function renderQuestion(){
+ answered=false;selectedChoice=null;const list=activeQuestions(),q=list[index];
+ $('count').textContent=`${index+1} / ${list.length}`;updateLivesDisplay();
+ $('sectionName').textContent=activeTopic;
+ $('topicTag').textContent=activeTopic.toUpperCase();
+ updateProgressIndicator();
+ $('questionText').textContent=q.q;$('options').innerHTML='';
+ $('feedback').className='feedback';$('feedback').textContent='';
+ $('checkBtn').disabled=true;$('nextBtn').disabled=true;$('nextBtn').textContent=index===list.length-1?'Selesaikan subtes':'Lanjut ke soal berikutnya →';$('selectionHint').textContent='Pilih jawaban, lalu tekan “Periksa jawaban”.';
+ q.o.forEach((option,i)=>{const b=document.createElement('button');b.type='button';b.className='option';b.innerHTML=`<span class="letter">${String.fromCharCode(65+i)}</span><span>${option}</span>`;b.addEventListener('click',()=>selectAnswer(i,b));$('options').appendChild(b);});
+}
+function updateLivesDisplay(){
+ const hearts=$('lifeHearts'),count=$('lifeCount');
+ if(!hearts||!count)return;
+ const heartSvg='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21l7.8-7.5 1.1-1.1a5.5 5.5 0 0 0-.1-7.8Z"/></svg>';
+ if(lives<=3){
+  hearts.innerHTML='';
+  for(let i=0;i<3;i++){
+   const heart=document.createElement('span');
+   heart.className='life-heart'+(i>=lives?' dead':'');
+   heart.innerHTML=heartSvg;
+   heart.setAttribute('aria-label',i>=lives?'Nyawa habis':'Nyawa tersedia');
+   hearts.appendChild(heart);
+  }
+ }else{
+  hearts.innerHTML=`<span class="life-heart">${heartSvg}</span>`;
+ }
+ count.textContent=lives<=3?'':`x${lives}`;
+ count.setAttribute('aria-label',`${lives} nyawa tersisa`);
+ $('streakText').textContent=`Rentetan benar: ${correctStreak}/3`;
+}
+function showLifeToast(amount){const toast=$('lifeToast');toast.textContent=amount>0?'+1':'-1';toast.classList.toggle('minus',amount<0);toast.classList.add('show');if(toastTimer)clearTimeout(toastTimer);toastTimer=setTimeout(()=>{toast.classList.remove('show');toast.classList.remove('minus');},3000);}
+function selectAnswer(choice,button){
+ if(answered)return;
+ selectedChoice=choice;
+ [...$('options').children].forEach((b,i)=>b.classList.toggle('selected',i===choice));
+ $('checkBtn').disabled=false;
+ $('selectionHint').textContent=`Jawaban ${String.fromCharCode(65+choice)} dipilih. Tekan “Periksa jawaban” untuk mengunci jawaban.`;
+}
+function checkSelectedAnswer(){
+ if(answered||selectedChoice===null)return;
+ const button=$('options').children[selectedChoice];
+ resolveAnswer(selectedChoice,button,false);
+}
+function resolveAnswer(choice,button,isSurrender){
+ if(answered)return;
+ const q=activeQuestions()[index];answered=true;
+ const livesBefore=lives;
+ const wasCorrect=!isSurrender && choice===q.a;
+ reviewHistory[activeTopic].push({number:index+1,question:q.q,options:q.o.slice(),selected:choice,correct:q.a,isCorrect:wasCorrect,isSurrender,explanation:q.why});
+ if(activeTopic==='Gerund')gerundAnswered++;else conditionalAnswered++;
+ updateProgressIndicator();
+ [...$('options').children].forEach(b=>b.disabled=true);
+ $('checkBtn').disabled=true;
+ if(wasCorrect){
+  questionsCorrect++;correctStreak++;button.classList.add('correct');
+  $('feedback').className='feedback show good';$('feedback').textContent=q.why;
+  if(correctStreak>=3 && !bonusLifeLocked){lives++;showLifeToast(1);correctStreak=0;}
+ }else{
+  wrongAttempts++;correctStreak=0;
+  if(isSurrender){
+   $('feedback').className='feedback show bad';
+   $('feedback').textContent=`Kamu memilih menyerah. Jawaban yang benar adalah ${String.fromCharCode(65+q.a)}. ${q.why}`;
+  }else{
+   button.classList.add('wrong');
+   $('feedback').className='feedback show bad';$('feedback').textContent=q.why;
+  }
+  $('options').children[q.a].classList.add('correct');
+  lives=Math.max(0,lives-1);showLifeToast(-1);
+ }
+ updateLivesDisplay();
+ if(!wasCorrect && !isSurrender && livesBefore===2 && lives===1){$('oneLifeModal').classList.remove('hidden');}
+ if(lives===0){$('oneLifeModal').classList.add('hidden');$('gameOverModal').classList.remove('hidden');}
+ $('selectionHint').textContent=isSurrender?'Soal ini dihitung salah karena kamu memilih menyerah.':'Jawaban sudah diperiksa.';
+ $('nextBtn').disabled=false;
+ $('nextBtn').textContent=lives===0?'Lihat hasil akhir':(index===activeQuestions().length-1?'Selesaikan subtes':'Lanjut ke soal berikutnya →');
+}
+function openSurrenderModal(){
+ if(answered)return;
+ $('surrenderModal').classList.remove('hidden');
+ $('cancelSurrenderBtn').focus();
+}
+function closeSurrenderModal(){
+ $('surrenderModal').classList.add('hidden');
+ $('surrenderBtn').focus();
+}
+function confirmSurrender(){
+ if(answered)return;
+ bonusLifeLocked=true;
+ correctStreak=0;
+ selectedChoice=null;
+ closeSurrenderModal();
+ resolveAnswer(-1,null,true);
+}
+function nextQuestion(){
+ if(!answered)return;
+ if(lives<=0){finishGame(false);return;}
+ const list=activeQuestions();
+ if(index<list.length-1){index++;renderQuestion();return;}
+ // Award points only at the end of a subtest; never expose live score during play.
+ const earned=questionsCorrect*5;
+ if(activeTopic==='Gerund'){gerundDone=true;gerundScore=earned;gerundCorrect=questionsCorrect;gerundWrong=gerundAnswered-gerundCorrect;updateProgressIndicator(true);showScreen('startScreen');updateMenu();return;}
+ conditionalDone=true;conditionalScore=earned;conditionalCorrect=questionsCorrect;conditionalWrong=conditionalAnswered-conditionalCorrect;updateProgressIndicator(true);finishGame(true);
+}
+function scoreColor(score){
+ // 0–34: merah makin gelap saat skor turun.
+ if(score<35){
+  const t=score/34;
+  const r=Math.round(105+(255-105)*t);
+  const g=Math.round(0+45*t);
+  const b=Math.round(12+45*t);
+  return `rgb(${r}, ${g}, ${b})`;
+ }
+ // 35–65: merah-oranye → kuning → hijau kekuningan.
+ if(score<=65){
+  const t=(score-35)/30;
+  const r=Math.round(240+(168-240)*t);
+  const g=Math.round(88+(210-88)*t);
+  const b=Math.round(35+(55-35)*t);
+  return `rgb(${r}, ${g}, ${b})`;
+ }
+ // 66–100: hijau makin gelap saat skor meningkat.
+ const t=(score-66)/34;
+ const r=Math.round(65+(0-65)*t);
+ const g=Math.round(198+(92-198)*t);
+ const b=Math.round(91+(42-91)*t);
+ return `rgb(${r}, ${g}, ${b})`;
+}
+function finishGame(completed){
+ if(!completed){
+  if(activeTopic==='Gerund'){gerundScore=questionsCorrect*5;gerundCorrect=questionsCorrect;gerundWrong=gerundAnswered-gerundCorrect;}
+  else{conditionalScore=questionsCorrect*5;conditionalCorrect=questionsCorrect;conditionalWrong=conditionalAnswered-conditionalCorrect;}
+ }
+ showScreen('resultScreen');
+ const total=gerundScore+conditionalScore;
+ $('finalScore').textContent=total;
+ const clampedScore=Math.max(0,Math.min(100,total));
+ $('scoreCircle').style.setProperty('--score-deg',`${clampedScore*3.6}deg`);
+ $('scoreCircle').style.setProperty('--score-color',scoreColor(clampedScore));
+ $('gerundScore').textContent=`${gerundScore} / 50`;$('conditionalScore').textContent=`${conditionalScore} / 50`;$('totalScore').textContent=`${total} / 100`;
+ $('gerundCorrectCount').textContent=gerundCorrect;$('gerundWrongCount').textContent=gerundWrong;
+ $('conditionalCorrectCount').textContent=conditionalCorrect;$('conditionalWrongCount').textContent=conditionalWrong;
+ $('correctCount').textContent=gerundCorrect+conditionalCorrect;$('wrongCount').textContent=gerundWrong+conditionalWrong;
+ $('remainingLives').textContent=formatLives();
+ $('resultTitle').textContent=completed?'Semua subtes selesai!':'Permainan berakhir';
+ const greeting=playerName?`${playerName}, `:'';
+ let encouragement='';
+ if(total>=90)encouragement=`${greeting}hasilmu sangat baik! Pertahankan dan terus tingkatkan kemampuan bahasa Inggrismu.`;
+ else if(total>=80)encouragement=`${greeting}kamu mendapatkan hasil yang baik. Lanjutkan, sedikit lagi menuju hasil sempurna!`;
+ else if(total>=70)encouragement=`${greeting}hasilmu cukup baik. Terus berlatih agar semakin menguasai materi.`;
+ else if(total>=60)encouragement=`${greeting}kamu sudah punya dasar yang cukup. Ulangi materi yang masih sulit dan coba lagi!`;
+ else if(total>=40)encouragement=`${greeting}jangan menyerah! Pelajari kembali pembahasannya dan tingkatkan hasilmu pada percobaan berikutnya.`;
+ else encouragement=`${greeting}ini kesempatan untuk belajar lagi. Tinjau materi Gerund dan Conditional Sentences, lalu coba kembali.`;
+ $('resultMessage').textContent=(completed?'Kamu telah menyelesaikan semua subtes. ':'Permainan berakhir sebelum semua subtes selesai. ')+encouragement;
+ $('finishReason').textContent=completed?'':'Hasil di atas berdasarkan soal yang telah dijawab sebelum nyawa habis.';
+}
+
+function openReview(){
+ const available=["Gerund","Conditional Sentences"].filter(topic=>reviewHistory[topic].length>0);
+ if(!available.length){
+  $('reviewQuestionCard').innerHTML='<p>Belum ada jawaban yang dapat ditinjau.</p>';
+  showScreen('reviewScreen');
+  return;
+ }
+ reviewTopic=available.includes(reviewTopic)?reviewTopic:available[0];
+ reviewIndex=Math.min(reviewIndex,reviewHistory[reviewTopic].length-1);
+ renderReview();
+ showScreen('reviewScreen');
+}
+function renderReview(){
+ const topics=["Gerund","Conditional Sentences"].filter(topic=>reviewHistory[topic].length>0);
+ const tabs=$('reviewTopicTabs');tabs.innerHTML='';
+ topics.forEach(topic=>{
+  const btn=document.createElement('button');btn.type='button';btn.className='review-topic'+(topic===reviewTopic?' active':'');
+  btn.textContent=topic==='Gerund'?'Subtes 1 · Gerund':'Subtes 2 · Conditional';
+  btn.addEventListener('click',()=>{reviewTopic=topic;reviewIndex=0;renderReview();});
+  tabs.appendChild(btn);
+ });
+ const entries=reviewHistory[reviewTopic]||[];
+ reviewIndex=Math.max(0,Math.min(reviewIndex,entries.length-1));
+ const slider=$('reviewNumberSlider');slider.innerHTML='';
+ entries.forEach((entry,i)=>{
+  const btn=document.createElement('button');btn.type='button';btn.className='review-number'+(i===reviewIndex?' active':'');
+  btn.textContent=entry.number;btn.setAttribute('aria-label',`Review soal nomor ${entry.number}`);
+  btn.addEventListener('click',()=>{reviewIndex=i;renderReview();});
+  slider.appendChild(btn);
+ });
+ const activeNumber=slider.querySelector('.review-number.active');if(activeNumber)activeNumber.scrollIntoView({block:'nearest',inline:'center',behavior:'smooth'});
+ const entry=entries[reviewIndex];
+ if(!entry){
+  $('reviewQuestionCard').innerHTML='<p>Belum ada jawaban yang dapat ditinjau.</p>';
+ }else{
+  const letter=i=>String.fromCharCode(65+i);
+  const selectedText=entry.isSurrender?'Kamu menyerah pada soal ini.':`${letter(entry.selected)}. ${entry.options[entry.selected]}`;
+  const correctText=`${letter(entry.correct)}. ${entry.options[entry.correct]}`;
+  let answerMarkup='';
+  if(entry.isCorrect){
+   answerMarkup=`<div class="review-answer yes"><strong>✓ Jawabanmu benar</strong><br>${selectedText}</div>`;
+  }else{
+   answerMarkup=`<div class="review-answer no"><strong>✕ Jawabanmu salah</strong><br>Jawabanmu: ${selectedText}</div><div class="review-answer yes"><strong>Jawaban yang benar:</strong><br>${correctText}</div>`;
+  }
+  $('reviewQuestionCard').innerHTML=`<div class="review-kicker">${reviewTopic.toUpperCase()} · SOAL ${entry.number} DARI ${entries.length}</div><h3>${entry.question}</h3>${entry.options.map((opt,i)=>`<div class="review-answer ${i===entry.correct?'yes':(i===entry.selected&&!entry.isCorrect?'no':'neutral')}"><strong>${letter(i)}.</strong> ${opt}${i===entry.correct?' <strong>· Kunci jawaban</strong>':''}${i===entry.selected?' <strong>· Jawabanmu</strong>':''}</div>`).join('')}${answerMarkup}<p class="review-explanation"><strong>Pembahasan:</strong> ${entry.explanation}</p>`;
+ }
+ $('reviewPrevBtn').disabled=reviewIndex<=0;
+ $('reviewNextBtn').disabled=reviewIndex>=entries.length-1;
+}
+function requestFinishReview(){$('finishReviewModal').classList.remove('hidden');}
+function finishReview(){ $('finishReviewModal').classList.add('hidden');showScreen('resultScreen');}
+
+$('startActiveBtn').addEventListener('click',()=>{
+ const topic=gerundDone?'Conditional Sentences':'Gerund';
+ if(topic==='Gerund'){
+  const entered=$('playerName').value.trim();
+  if(!entered){$('playerName').focus();$('playerName').style.borderColor='var(--red)';$('playerName').placeholder='Nama harus diisi terlebih dahulu';return;}
+  playerName=entered;
+  $('playerName').style.borderColor='#d9deef';
+ }
+ startSubtest(topic);
+});
+$('checkBtn').addEventListener('click',checkSelectedAnswer);
+$('nextBtn').addEventListener('click',nextQuestion);
+$('surrenderBtn').addEventListener('click',openSurrenderModal);
+$('cancelSurrenderBtn').addEventListener('click',closeSurrenderModal);
+$('confirmSurrenderBtn').addEventListener('click',confirmSurrender);
+$('dismissOneLifeBtn').addEventListener('click',()=>{$('oneLifeModal').classList.add('hidden');});
+$('showFinalResultBtn').addEventListener('click',()=>{$('gameOverModal').classList.add('hidden');finishGame(false);});
+$('reviewBtn').addEventListener('click',openReview);
+$('reviewPrevBtn').addEventListener('click',()=>{if(reviewIndex>0){reviewIndex--;renderReview();}});
+$('reviewNextBtn').addEventListener('click',()=>{const entries=reviewHistory[reviewTopic]||[];if(reviewIndex<entries.length-1){reviewIndex++;renderReview();}});
+$('finishReviewBtn').addEventListener('click',requestFinishReview);
+$('cancelFinishReviewBtn').addEventListener('click',()=>$('finishReviewModal').classList.add('hidden'));
+$('confirmFinishReviewBtn').addEventListener('click',finishReview);
+$('finishReviewModal').addEventListener('click',e=>{if(e.target===$('finishReviewModal'))$('finishReviewModal').classList.add('hidden');});
+$('surrenderModal').addEventListener('click',e=>{if(e.target===$('surrenderModal'))closeSurrenderModal();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('surrenderModal').classList.contains('hidden'))closeSurrenderModal();if(e.key==='Escape'&&!$('oneLifeModal').classList.contains('hidden'))$('oneLifeModal').classList.add('hidden');});
+updateMenu();
+$('restartBtn').addEventListener('click',()=>{reviewHistory={"Gerund":[],"Conditional Sentences":[]};reviewTopic='Gerund';reviewIndex=0;index=0;lives=5;answered=false;selectedChoice=null;bonusLifeLocked=false;wrongAttempts=0;correctStreak=0;questionsCorrect=0;gerundScore=0;conditionalScore=0;gerundCorrect=0;conditionalCorrect=0;gerundWrong=0;conditionalWrong=0;gerundAnswered=0;conditionalAnswered=0;gerundDone=false;conditionalDone=false;activeTopic='Gerund';playerName='';$('playerName').value='';$('playerName').style.borderColor='#d9deef';$('gameOverModal').classList.add('hidden');$('oneLifeModal').classList.add('hidden');$('surrenderModal').classList.add('hidden');$('finishReviewModal').classList.add('hidden');showScreen('startScreen');updateMenu();});
+</script>
+</body>
+</html>
